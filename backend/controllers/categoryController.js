@@ -1,6 +1,14 @@
+const Category = require('../models/CategoryModel');
 
-const getCategories = (req, res) => {
-  res.send('Handling category routes, e.g. search for categories');
+const getCategories = async (req, res) => {
+  try {
+    const categories = await Category.find({}).sort({ name: 'asc' }).orFail();
+    res.json(categories);
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = getCategories;
+
+// 'asc' means ascendent order, so line 5 will return all categories in ascendent order
