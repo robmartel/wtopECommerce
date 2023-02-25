@@ -1,7 +1,14 @@
-const express = require("express")
-const app = express()
-const productRoutes = require("./productRoutes")
+const express = require('express');
+const app = express();
 
-app.use("/products", productRoutes)
+const productRoutes = require('./productRoutes');
+const categoryRoutes = require('./categoryRoutes');
+const userRoutes = require('./userRoutes');
+const orderRoutes = require('./orderRoutes');
 
-module.exports = app 
+app.use('/products', productRoutes);
+app.use('/categories', categoryRoutes);
+app.use('/users', userRoutes);
+app.use('/orders', orderRoutes);
+
+module.exports = app;
