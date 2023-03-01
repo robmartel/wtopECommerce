@@ -5,6 +5,7 @@ const getProducts = async (req, res, next) => {
   try {
     let query = {};
     let queryCondition = false;
+
     let priceQueryCondition = {};
     if (req.query.price) {
       queryCondition = true;
@@ -15,7 +16,6 @@ const getProducts = async (req, res, next) => {
       queryCondition = true;
       ratingQueryCondition = { rating: { $in: req.query.rating.split(',') } };
     }
-
     let categoryQueryCondition = {};
     const categoryName = req.params.categoryName || '';
     if (categoryName) {
@@ -24,7 +24,6 @@ const getProducts = async (req, res, next) => {
       var regEx = new RegExp('^' + a);
       categoryQueryCondition = { category: regEx };
     }
-
     if (req.query.category) {
       queryCondition = true;
       let a = req.query.category.split(',').map((item) => {
@@ -34,6 +33,26 @@ const getProducts = async (req, res, next) => {
         category: { $in: a },
       };
     }
+    let attrsQueryCondition = [];
+    if (req.query.attrs) {
+      // attrs=RAM-1TB-2TB-4TB,color-blue-red
+      // [ 'RAM-1TB-4TB', 'color-blue', '' ]
+      attrsQueryCondition = req.query.attrs.split(',').reduce((acc, item) => {
+        if (item) {
+          let a = item.split('-');
+          let values = [...a];
+          values.shift(); // removes first item
+          let a1 = {
+            attrs: { $elemMatch: { key: a[0], value: { $in: values } } },
+          };
+          acc.push(a1);
+          // console.dir(acc, { depth: null })
+          return acc;
+        } else return acc;
+      }, []);
+      //   console.dir(attrsQueryCondition, { depth: null });
+      queryCondition = true;
+    }
 
     if (queryCondition) {
       query = {
@@ -41,6 +60,7 @@ const getProducts = async (req, res, next) => {
           priceQueryCondition,
           ratingQueryCondition,
           categoryQueryCondition,
+          ...attrsQueryCondition,
         ],
       };
     }
@@ -48,13 +68,12 @@ const getProducts = async (req, res, next) => {
     //pagination
     const pageNum = Number(req.query.pageNum) || 1;
 
-    //sort by name, price, etc.
+    // sort by name, price etc.
     let sort = {};
     const sortOption = req.query.sort || '';
     if (sortOption) {
       let sortOpt = sortOption.split('_');
-      sort = { [sortOpt[0]]: Number(sortOpt[1]) }; //first set of [] around sortOpt is because you are using js dynamically for a key
-      console.log(sort);
+      sort = { [sortOpt[0]]: Number(sortOpt[1]) };
     }
 
     const totalProducts = await Product.countDocuments(query);
@@ -62,6 +81,7 @@ const getProducts = async (req, res, next) => {
       .skip(recordsPerPage * (pageNum - 1))
       .sort(sort)
       .limit(recordsPerPage);
+
     res.json({
       products,
       pageNum,
@@ -71,5 +91,4 @@ const getProducts = async (req, res, next) => {
     next(error);
   }
 };
-
 module.exports = getProducts;
