@@ -54,17 +54,6 @@ const getProducts = async (req, res, next) => {
       queryCondition = true;
     }
 
-    if (queryCondition) {
-      query = {
-        $and: [
-          priceQueryCondition,
-          ratingQueryCondition,
-          categoryQueryCondition,
-          ...attrsQueryCondition,
-        ],
-      };
-    }
-
     //pagination
     const pageNum = Number(req.query.pageNum) || 1;
 
@@ -76,8 +65,34 @@ const getProducts = async (req, res, next) => {
       sort = { [sortOpt[0]]: Number(sortOpt[1]) };
     }
 
+    const searchQuery = req.params.searchQuery || '';
+    let searchQueryCondition = {};
+    let select = {};
+    if (searchQuery) {
+      queryCondition = true;
+      searchQueryCondition = { $text: { $search: searchQuery } };
+      // searchQueryCondition = { $text: { $search: '"'+searchQuery+'"' } }; // this option makes sure that the search returns exactly what is typed
+      select = {
+        score: { $meta: 'textScore' },
+      };
+      sort = { score: { $meta: 'textScore' } };
+    }
+
+    if (queryCondition) {
+      query = {
+        $and: [
+          priceQueryCondition,
+          ratingQueryCondition,
+          categoryQueryCondition,
+          searchQueryCondition,
+          ...attrsQueryCondition,
+        ],
+      };
+    }
+
     const totalProducts = await Product.countDocuments(query);
     const products = await Product.find(query)
+      .select(select) // use select for excluding fields from the results
       .skip(recordsPerPage * (pageNum - 1))
       .sort(sort)
       .limit(recordsPerPage);
