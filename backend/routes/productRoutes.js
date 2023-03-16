@@ -6,6 +6,8 @@ const {
   getBestsellers,
   adminGetProducts,
   adminDeleteProducts,
+  adminCreateProducts,
+  adminUpdateProduct
 } = require('../controllers/productController');
 
 router.get('/category/:categoryName/search/:searchQuery', getProducts); //anything after : is a dynamic value
@@ -18,5 +20,7 @@ router.get('/get-one:id', getProductById);
 //admin routes
 router.get('/admin', adminGetProducts);
 router.delete('/admin/:id', adminDeleteProducts);
+router.put("/admin/:id", adminUpdateProduct);
+router.post('/admin', adminCreateProducts);
 
 module.exports = router;
