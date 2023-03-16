@@ -219,10 +219,21 @@ const adminUpload = async (req, res, next) => {
     if (validateResult.error) {
       return res.status(400).send(validateResult.error);
     }
+
+    const path = require("path")
+
+    // creating a random name using uuid 
+    const { v4: uuidv4 } = require('uuid');
+
+    let imagesTable = []
     if (Array.isArray(req.files.images)) {
-      res.send('You uploaded ' + req.files.images.length + ' images');
+      imagesTable = req.files.images
     } else {
-      res.send('You have uploaded one image');
+      imagesTable.push(req.files.images)
+    }
+    for(let image of imagesTable) {
+      console.log(path.extname(image.name))
+      console.log(uuidv4())
     }
   } catch (err) {
     next(err);
