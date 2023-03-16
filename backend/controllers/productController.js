@@ -220,21 +220,40 @@ const adminUpload = async (req, res, next) => {
       return res.status(400).send(validateResult.error);
     }
 
-    const path = require("path")
+    const path = require('path');
 
-    // creating a random name using uuid 
+    // creating a random name using uuid
     const { v4: uuidv4 } = require('uuid');
+    // declared the path for upload
+    const uploadDirectory = path.resolve(
+      __dirname,
+      '../../frontend',
+      'public',
+      'images',
+      'products'
+    );
 
-    let imagesTable = []
+    let product = await Product.findById(req.query.productId).orFail();
+
+    let imagesTable = [];
     if (Array.isArray(req.files.images)) {
-      imagesTable = req.files.images
+      imagesTable = req.files.images;
     } else {
-      imagesTable.push(req.files.images)
+      imagesTable.push(req.files.images);
     }
-    for(let image of imagesTable) {
-      console.log(path.extname(image.name))
-      console.log(uuidv4())
+    for (let image of imagesTable) {
+      // Creating the path where upload will go and saving that path
+      var fileName = uuidv4() + path.extname(image.name);
+      var uploadPath = uploadDirectory + '/' + fileName;
+      product.images.push({ path: '/images/products/' + fileName });
+      image.mv(uploadPath, function (err) {
+        if (err) {
+          return res.status(500).send(err);
+        }
+      });
     }
+    await product.save();
+    return res.send('File(s) uploaded!');
   } catch (err) {
     next(err);
   }
